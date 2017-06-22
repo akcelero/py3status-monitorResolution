@@ -17,7 +17,7 @@ class Py3status:
     options = []
 
     def _getResolution(self):
-        res = subprocess.check_output("xrandr | grep \* | cut -d ' ' -f4", shell=True)
+        res = subprocess.check_output("xrandr | grep {output} | egrep -o '([0-9]+x[0-9]+)'".format(output=self.output), shell=True)
         self.currentResolution = res.decode().replace('\n','')
     
     def _setNextResolution(self):
@@ -29,10 +29,10 @@ class Py3status:
             yield 'non'
 
     def __init__(self):
-        self._getResolution()
         self.gen = self._setNextResolution()
 
     def resolution(self):
+        self._getResolution()
         format = self.format.format(output = self.output, resolution = self.currentResolution)
         return {
             'full_text' : format,
@@ -40,7 +40,7 @@ class Py3status:
         }
 
     def on_click(self, event):
-        self.currentResolution = self.gen.__next__()
+        self.currentResolution = next(self.gen)
         baseCmd = 'xrandr --output {output} --mode {option}'
         command = baseCmd.format(output = self.output, option = self.currentResolution)
         os.system(command)
